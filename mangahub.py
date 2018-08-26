@@ -72,10 +72,10 @@ def chooseChapters(mangaName, chapters):
             secondIndex = len(chapters)
         elif "-" in index:
             temp = index.split("-")
-            firstIndex = int(temp[0])
+            firstIndex = int(temp[0]) - 1
             secondIndex = int(temp[1])
         else:
-            firstIndex = int(index)
+            firstIndex = int(index) - 1
             secondIndex = firstIndex + 1
         for i in range(firstIndex, secondIndex):
             chapter = chapters[i]
@@ -91,16 +91,17 @@ def chooseChapters(mangaName, chapters):
 def downloadChapter(mangaName, chapterName, chapterURL):
     response = requests.get(chapterURL)
     soup = BeautifulSoup(response.content, 'html.parser')
-    baseImageURL = soup.find_all(class_="PB0mN")[0]['src'].split('1.jpg')[0]
+    baseImageURL, filetype = soup.find_all(class_="PB0mN")[0]['src'].split('1.')
+    # All the images are found by incrementing on the url of the first image
     folder = Path(mangaName + "//")
     folder.mkdir(parents=True, exist_ok=True)
     imageNames = []
     num = 1
     while True:
-        response = requests.get(baseImageURL + str(num) + ".jpg")
-        if response.status_code == 404:
+        response = requests.get(baseImageURL + str(num) + '.' + filetype)
+        if response.status_code != 200:
             break
-        name = mangaName + " " + chapterName + " " + str(num) + ".jpg"
+        name = mangaName + " " + chapterName + " " + str(num) + '.' + filetype
         imageNames.append((str(folder.resolve()) + "//" + name))
         file = folder.joinpath(name)
         with file.open('wb') as wf:
@@ -111,8 +112,11 @@ def downloadChapter(mangaName, chapterName, chapterURL):
 
 def generatePDF(folder, imageNames, chapterName, mangaName):
     file = folder.joinpath(mangaName + " " + chapterName + ".pdf")
-    with file.open('wb') as wf:
-        wf.write(img2pdf.convert(imageNames))
+    if imageNames:
+        with file.open('wb') as wf:
+            wf.write(img2pdf.convert(imageNames))
+    else:
+        print("Error! No images found, PDF not made")
     for name in imageNames:
         os.remove(name)
     print("Finished with " + chapterName)
