@@ -92,17 +92,20 @@ def downloadChapter(mangaName, chapterName, chapterURL):
     response = requests.get(chapterURL)
     soup = BeautifulSoup(response.content, 'html.parser')
     baseImageURL = soup.find_all(class_="PB0mN")[0]['src'].split('1.jpg')[0]
-    chapterLength = int(soup.find_all(class_="_3w1ww")[0].text.split('/')[1]) + 1
     folder = Path(mangaName + "//")
     folder.mkdir(parents=True, exist_ok=True)
     imageNames = []
-    for num in range(1, chapterLength):
+    num = 1
+    while True:
+        response = requests.get(baseImageURL + str(num) + ".jpg")
+        if response.status_code == 404:
+            break
         name = mangaName + " " + chapterName + " " + str(num) + ".jpg"
         imageNames.append((str(folder.resolve()) + "//" + name))
         file = folder.joinpath(name)
-        response = requests.get(baseImageURL + str(num) + ".jpg")
         with file.open('wb') as wf:
             wf.write(response.content)
+        num += 1
     generatePDF(folder, imageNames, chapterName, mangaName)
 
 
