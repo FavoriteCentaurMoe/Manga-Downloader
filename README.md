@@ -3,8 +3,12 @@ This is a python program that downloads chapters of manga from https://mangahub.
 You can enter in search terms and it will display the results
 
 # Dependencies
-BeautifulSoup
+* BeautifulSoup
+* img2pdf
 
-img2pdf
+# Usage
+
+In the CMD run python mangahub.py
+
 
 This has only been tested on Windows so far 
