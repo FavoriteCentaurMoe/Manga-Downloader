@@ -4,6 +4,7 @@ You can enter in search terms and it will display the results
 
 # Dependencies
 BeautifulSoup
+
 img2pdf
 
 This has only been tested on Windows so far 
