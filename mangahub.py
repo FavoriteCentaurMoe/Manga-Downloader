@@ -1,9 +1,10 @@
 import requests
 import urllib
 import os
-import img2pdf
+import zipfile
 from pathlib import Path
 from bs4 import BeautifulSoup
+
 
 url = 'https://mangahub.io/search?q='
 
@@ -107,19 +108,19 @@ def downloadChapter(mangaName, chapterName, chapterURL):
         with file.open('wb') as wf:
             wf.write(response.content)
         num += 1
-    generatePDF(folder, imageNames, chapterName, mangaName)
+    generateCBZ(folder, imageNames, chapterName, mangaName)
 
 
-def generatePDF(folder, imageNames, chapterName, mangaName):
-    file = folder.joinpath(mangaName + " " + chapterName + ".pdf")
+def generateCBZ(folder, imageNames, chapterName, mangaName):
+    file = folder.joinpath(mangaName + " " + chapterName + ".cbz")
     if imageNames:
-        with file.open('wb') as wf:
-            wf.write(img2pdf.convert(imageNames))
+        z = zipfile.ZipFile(file, 'w')
+        for image in imageNames:
+            z.write(image)
     else:
-        print("Error! No images found, PDF not made")
+        print("Error! No images found, CBZ not made")
     for name in imageNames:
         os.remove(name)
-    print("Finished with " + chapterName)
 
 
 if __name__ == '__main__':
