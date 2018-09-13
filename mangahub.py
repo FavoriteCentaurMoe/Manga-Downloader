@@ -99,7 +99,8 @@ def downloadChapter(mangaName, chapterName, chapterURL):
     imageNames = []
     num = 1
     while True:
-        response = requests.get(baseImageURL + str(num) + '.' + filetype)
+        downloadURL = baseImageURL + str(num) + '.'
+        response = isThisBroken(requests.get(downloadURL + filetype), downloadURL, filetype)
         if response.status_code != 200:
             break
         name = mangaName + " " + chapterName + " " + str(num) + '.' + filetype
@@ -109,6 +110,27 @@ def downloadChapter(mangaName, chapterName, chapterURL):
             wf.write(response.content)
         num += 1
     generateCBZ(folder, imageNames, chapterName, mangaName)
+
+
+def isThisBroken(response, downloadURL, filetype):
+    """checks to see if the filetpye needs to be changed"""
+    if response.status_code != 200:
+        return tryDifferentFileType(downloadURL, filetype)
+    else:
+        return response
+
+
+def tryDifferentFileType(downloadURL, filetype):
+    """sometimes all the images do not have the same filetype"""
+    if filetype == "jpeg" or filetype == "jpg":
+        filetype = "png"
+    else:
+        filetype = "jpeg"
+    response = requests.get(downloadURL + filetype)
+    if response.status_code == 404 and filetype == "jpeg":
+        filetype = 'jpg'
+        response = requests.get(downloadURL + filetype)
+    return response
 
 
 def generateCBZ(folder, imageNames, chapterName, mangaName):
