@@ -1,6 +1,6 @@
 import requests
 import urllib
-import  json
+import json
 import os
 import zipfile
 from pathlib import Path
@@ -8,6 +8,8 @@ from bs4 import BeautifulSoup
 
 url = 'https://mangahub.io/search?q='
 historyFileName = "DownloadHistory.json"
+
+specialCharacters = ['\\','/',':', '?', '*', '<', '>', '|']
 
 
 def start():
@@ -47,7 +49,6 @@ def chooseManga(results):
         print("Index out of bounds. Try again")
         start()
     except ValueError:
-        print("Invalid input, try again")
         displayManga(makeSearchURL(mangaChosen))
 
 
@@ -85,27 +86,44 @@ def chooseChapters(mangaName, chapters, chapterListURL):
         chapterNum = chapters[firstIndex].find(class_="text-secondary _3D1SJ").text
         saveHistory(chapterNum, mangaName, chapterListURL)
     except IndexError:
-        print("Invalid Format, try again")
+        print("INDEX ERROR Invalid Format, try again")
         chooseChapters(mangaName, chapters)
 
 
 def downloadChapter(mangaName, chapterName, chapterURL):
-    baseImageURL, filetype = getSoup(chapterURL).find_all(class_="PB0mN")[0]['src'].split('1.')
-    folder = Path(mangaName + "//")
-    folder.mkdir(parents=True, exist_ok=True)
+    mangaName = validName(mangaName)
+    soup = getSoup(chapterURL).find_all(class_="PB0mN")[0]['src'].split('/1.')
+    baseImageURL, filetype = soup[0] + "/", soup[-1]
+    folder = createPath(mangaName)
     imageNames, num = [], 1
     while True:
         downloadURL = baseImageURL + str(num) + '.'
         response = isThisBroken(requests.get(downloadURL + filetype), downloadURL, filetype)
         if response.status_code != 200:
             break
-        name = mangaName + " " + chapterName + " " + str(num) + '.' + filetype
+        name = 'teeemp' + " " + chapterName + " " + str(num) + '.' + filetype
         imageNames.append((str(folder.resolve()) + "//" + name))
         file = folder.joinpath(name)
         with file.open('wb') as wf:
             wf.write(response.content)
         num += 1
     generateCBZ(folder, imageNames, chapterName, mangaName)
+
+
+def createPath(mangaName):
+    """go through the name and omit all invalid characters"""
+    try:
+        folder = Path(mangaName + "//")
+        folder.mkdir(parents=True, exist_ok=True)
+        return folder
+    except NotADirectoryError:
+        print(mangaName, "is an invalid file or folder name")
+
+
+def validName(name):
+    for character in specialCharacters:
+        name = name.replace(character, ' ')
+    return name
 
 
 def isThisBroken(response, downloadURL, filetype):
