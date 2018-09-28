@@ -19,6 +19,7 @@ def start():
         test.checkForUpdates()
     else:
         displayManga(makeSearchURL(searchTerm))
+    start()
 
 
 def displayManga(mangaURL):
@@ -158,49 +159,55 @@ def generateCBZ(folder, imageNames, chapterName, mangaName):
         os.remove(name)
 
 
+
+
 class Update:
 
-    def findNewChapters(self, URL,latestChapter):
-        chapters = getSoup(URL).find_all(class_="_287KE list-group-item")
-        newChapters = []
+    def findNewChapters(self, URL, latestChapter):
+        chapters, newChapters = getSoup(URL).find_all(class_="_287KE list-group-item"), []
         for chapter in chapters:
             chapterNum = chapter.find(class_="text-secondary _3D1SJ").text
-            newChapters.append(chapter)
             if chapterNum == latestChapter:
                 return newChapters
+            newChapters.append(chapter)
 
-    def checkSeriesUpdates(self, num, name, content):
-        latestChapter = content['Chapters']
-        newChapters = self.findNewChapters(content['URL'], latestChapter)
-        print(num, "  {:40} {:4} new chapters available".format(name, (len(newChapters)-1)))
-        return newChapters
+    def checkSeriesUpdates(self, data):
+        newChaps, num = [], 0
+        for name in data:
+            latestChapter = data[name]['Chapters']
+            newChapters = self.findNewChapters(data[name]['URL'], latestChapter)
+            print(num, "  {:40} {:4} new chapters available".format(name, (len(newChapters))))
+            if newChapters:
+                newChaps.append((name, newChapters))
+            num += 1
+        return newChaps
 
-    def downloadChp(self, newChapters, name, URL):
+    def downloadChp(self, newChaptersContainer, URL):
+        name, newChapters = newChaptersContainer
         chapterNum = newChapters[0].find(class_="text-secondary _3D1SJ").text
         saveHistory(chapterNum, name, URL)
         for index in range(len(newChapters)):
             chapterName = newChapters[index].find('span').text
             chapterURL = newChapters[index].find('a')['href']
-            downloadChapter(name, chapterName, chapterURL)
+            downloadChapter(validName(name), validName(chapterName), chapterURL)
 
     def checkForUpdates(self):
         data = checkSaveData()
-        newChaps = {}
-        num = 1
-        for d in data:
-            newChaps[d] = self.checkSeriesUpdates(num, d, data[d])
-            num += 1
+        if data == {}:
+            print("No download history found")
+            return
+        newChaps = self.checkSeriesUpdates(data)
+        for i in newChaps:
+            print(i)
         index = input("Enter 'all' to update all or a number to choose one series : ")
         if index == "all":
-            for n in newChaps:
-                self.downloadChp(newChaps[n], n, data[n]['URL'])
+            for n in range(0, len(newChaps)):
+                self.downloadChp(newChaps[n], data[newChaps[n][0]]['URL'])
         else:
             try:
-                n = int(index) - 1
-                name = list(newChaps.keys())[n]
-                self.downloadChp(newChaps[name], name, data[n]['URL'])
-            except:
-                print("Invalid input, try again")
+                self.downloadChp(newChaps[int(index)], data[newChaps[int(index)][0]]['URL'])
+            except IndexError:
+                print("Invalid Index!")
                 self.checkForUpdates()
 
 
@@ -219,10 +226,11 @@ def checkSaveData():
 
 def saveHistory(chapter, mangaName, chapterListURL):
     data = checkSaveData()
-    subDict = {'Chapters':chapter, 'URL': chapterListURL}
+    subDict = {'Chapters': chapter, 'URL': chapterListURL}
     data[mangaName] = subDict
     with open(historyFileName, 'w') as outfile:
         json.dump(data, outfile)
+        outfile.flush()
 
 
 def makeSearchURL(searchTerm):
