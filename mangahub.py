@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 url = 'https://mangahub.io/search?q='
 historyFileName = "DownloadHistory.json"
 
-specialCharacters = ['\\','/',':', '?', '*', '<', '>', '|']
+specialCharacters = ['\\', '/', ':', '?', '*', '<', '>', '|', '"']
 
 
 def start():
@@ -32,7 +32,7 @@ def displayManga(mangaURL):
         name = result.find('a').text
         try:
             author = result.find('small').text
-        except AttributeError:
+        except OSError:
             author = " "
         latestChapter = result.next_sibling.find('a').text
         print("{:<4} {:50} {:10} {:20}".format(num, name, latestChapter, author))
@@ -44,7 +44,7 @@ def chooseManga(results):
     mangaChosen = input("Enter a number to select a manga or enter a name to search again : ")
     try:
         manga = results[int(mangaChosen) - 1]
-        displayChapters(manga.find('a').text, manga.find('a')['href'])
+        displayChapters(validName(manga.find('a').text), manga.find('a')['href'])
     except IndexError:
         print("Index out of bounds. Try again")
         start()
@@ -78,7 +78,7 @@ def chooseChapters(mangaName, chapters, chapterListURL):
             secondIndex = firstIndex + 1
         for i in range(firstIndex, secondIndex):
             try:
-                chapterName = chapters[i].find('span').text
+                chapterName = validName(chapters[i].find('span').text)
                 chaptersDownloaded.append(chapterName)
                 downloadChapter(mangaName, chapterName, chapters[i].find('a')['href'])
             except OSError:
@@ -91,7 +91,6 @@ def chooseChapters(mangaName, chapters, chapterListURL):
 
 
 def downloadChapter(mangaName, chapterName, chapterURL):
-    mangaName = validName(mangaName)
     soup = getSoup(chapterURL).find_all(class_="PB0mN")[0]['src'].split('/1.')
     baseImageURL, filetype = soup[0] + "/", soup[-1]
     folder = createPath(mangaName)
@@ -101,8 +100,8 @@ def downloadChapter(mangaName, chapterName, chapterURL):
         response = isThisBroken(requests.get(downloadURL + filetype), downloadURL, filetype)
         if response.status_code != 200:
             break
-        name = 'teeemp' + " " + chapterName + " " + str(num) + '.' + filetype
-        imageNames.append((str(folder.resolve()) + "//" + name))
+        name = mangaName + " " + chapterName + " " + str(num) + '.' + filetype
+        imageNames.append((str(folder.resolve()) + "/" + name))
         file = folder.joinpath(name)
         with file.open('wb') as wf:
             wf.write(response.content)
