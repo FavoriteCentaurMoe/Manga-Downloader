@@ -27,16 +27,16 @@ def displayManga(mangaURL):
     if not results:
         print("No results. Try again")
         return start()
-    print("{:<4} {:50} {:10} {:20}".format("#", "NAME", "CHAPTERS", "AUTHOR", ))
+    print("{:<4} {:60} {:10} {:20}".format("#", "NAME", "CHAPTERS", "AUTHOR", ))
     num = 1
     for result in results:
         name = result.find('a').text
         try:
             author = result.find('small').text
-        except OSError:
+        except AttributeError:
             author = " "
         latestChapter = result.next_sibling.find('a').text
-        print("{:<4} {:50} {:10} {:20}".format(num, name, latestChapter, author))
+        print("{:<4} {:60} {:10} {:20}".format(num, name, latestChapter, author))
         num += 1
     chooseManga(results)
 
@@ -54,7 +54,7 @@ def chooseManga(results):
 
 
 def displayChapters(mangaName, chapterListURL):
-    print(mangaName + " Chapters")
+    print(mangaName + " Chapters : ")
     chapters, num = getSoup(chapterListURL).find_all(class_="_287KE list-group-item"), 1
     for chapter in chapters:
         chapterNum = chapter.find(class_="text-secondary _3D1SJ").text
@@ -122,7 +122,7 @@ def createPath(mangaName):
 
 def validName(name):
     for character in specialCharacters:
-        name = name.replace(character, ' ')
+        name = name.replace(character, '')
     return name
 
 
