@@ -104,3 +104,7 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+#PyCharm nonsense
+.xml
+.idea/

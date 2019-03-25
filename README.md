@@ -1,15 +1,15 @@
 # Manga-Downloader
-This is a python program that downloads chapters of manga from https://mangahub.io/ in cbz
-You can enter in search terms and it will display the results
+This is a python program that downloads chapters of manga from https://mangahub.io/ in .cbz format
 
-It also keeps tracks of the latest chapter downloaded and will check for updates 
+You can search for series and then select which chapters to download.
+
+Download history is automatically saved. Enter "U" when the program starts to check for new chapters and download them
 
 # Dependencies
 * BeautifulSoup
 * requests
 
 # Usage
-
 In the CMD run python mangahub.py
 
 
