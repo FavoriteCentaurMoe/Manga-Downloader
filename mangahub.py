@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 url = 'https://mangahub.io/search?q='
 history_file_name = "DownloadHistory.json"
 
-special_characters = ['\\', '/', ':', '?', '*', '<', '>', '|', '"']
+special_characters = ['\\', '/', ':', '?', '*', '<', '>', '|', '"', '-']
 
 
 def start():
